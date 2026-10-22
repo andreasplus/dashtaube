@@ -1,0 +1,16 @@
+{
+  "name": "@dashtaube/client",
+  "version": "0.1.0",
+  "description": "Kleiner Client, um Meldungen an eine Dashtaube-Instanz zu schicken.",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p ."
+  },
+  "dependencies": {
+    "@dashtaube/core": "workspace:*"
+  }
+}

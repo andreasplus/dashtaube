@@ -1,0 +1,17 @@
+{
+  "env": {
+    "DASHTAUBE_URL": "https://dashtaube.DEIN-NAME.workers.dev",
+    "DASHTAUBE_TOKEN": "dt_DEIN_TOKEN"
+  },
+  "hooks": {
+    "Notification": [
+      { "hooks": [{ "type": "command", "command": "~/.claude/hooks/dashtaube-hook.sh", "timeout": 10 }] }
+    ],
+    "Stop": [
+      { "hooks": [{ "type": "command", "command": "~/.claude/hooks/dashtaube-hook.sh", "timeout": 10 }] }
+    ],
+    "SubagentStop": [
+      { "hooks": [{ "type": "command", "command": "~/.claude/hooks/dashtaube-hook.sh", "timeout": 10 }] }
+    ]
+  }
+}

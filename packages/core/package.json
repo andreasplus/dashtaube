@@ -1,0 +1,22 @@
+{
+  "name": "@dashtaube/core",
+  "version": "0.1.0",
+  "description": "Taube-Event-Schema, Normalisierung und Signaturen für Dashtaube und das Posttaube-Universum.",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./search": "./src/search.ts",
+    "./notification": "./src/notification.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p .",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "vitest": "^4.1.0"
+  }
+}

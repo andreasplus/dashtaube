@@ -1,0 +1,14 @@
+name: Idee oder Wunsch
+description: Schlag eine neue Funktion oder Quelle vor.
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Welches Problem soll das lösen?
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: Wie stellst du dir das vor?
