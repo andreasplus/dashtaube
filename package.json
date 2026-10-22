@@ -1,0 +1,47 @@
+{
+  "name": "dashtaube",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Dein zentraler Überblick über alle KI-Benachrichtigungen. Teil des Posttaube-Universums.",
+  "license": "MIT",
+  "type": "module",
+  "packageManager": "pnpm@10.28.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @dashtaube/web build && pnpm db:migrate:local && wrangler dev",
+    "dev:web": "pnpm --filter @dashtaube/web dev",
+    "build": "pnpm --filter @dashtaube/web build",
+    "deploy": "(wrangler d1 migrations apply DB --remote || echo 'Die Datenbank wird beim ersten Deploy angelegt.') && wrangler deploy && wrangler d1 migrations apply DB --remote",
+    "db:migrate:local": "wrangler d1 migrations apply DB --local",
+    "db:migrate:remote": "wrangler d1 migrations apply DB --remote",
+    "typecheck": "pnpm -r typecheck",
+    "lint": "eslint .",
+    "test": "pnpm -r test",
+    "cf-typegen": "wrangler types apps/worker/worker-configuration.d.ts"
+  },
+  "cloudflare": {
+    "bindings": {
+      "ADMIN_PASSWORD": {
+        "description": "Passwort für dein Dashboard. Mindestens 12 Zeichen, z. B. mit `openssl rand -base64 24` erzeugen."
+      },
+      "DB": {
+        "description": "D1-Datenbank für Meldungen, Quellen und die Volltextsuche."
+      },
+      "OAUTH_KV": {
+        "description": "KV-Speicher für die OAuth-Verbindungen (MCP für ChatGPT und Claude)."
+      },
+      "INBOX_HUB": {
+        "description": "Durable Object für Live-Updates im Dashboard."
+      }
+    }
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.0",
+    "eslint": "^10.13.0",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.72.0",
+    "wrangler": "^4.152.0"
+  }
+}

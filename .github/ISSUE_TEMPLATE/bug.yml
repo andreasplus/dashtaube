@@ -1,0 +1,26 @@
+name: Fehler melden
+description: Etwas funktioniert nicht wie erwartet.
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: Was ist passiert?
+      description: Was hast du gemacht, was hast du erwartet, was kam stattdessen?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Schritte zum Nachstellen
+      placeholder: "1. …\n2. …"
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Steht im MCP-serverInfo oder unter /v1/health.
+  - type: dropdown
+    id: source
+    attributes:
+      label: Betroffene Quelle
+      options: ["Dashboard", "API / curl", "Claude Code", "ChatGPT / MCP", "Posttaube", "Deployment", "Andere"]
