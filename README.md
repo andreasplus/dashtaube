@@ -29,6 +29,17 @@
 4. Deploy abwarten. Die Datenbank-Migrationen laufen dabei automatisch.
 5. `https://dashtaube.<dein-konto>.workers.dev` öffnen, anmelden, unter *Quellen* die erste Quelle anlegen und auf *Testmeldung* klicken.
 
+Die Datenbank-Tabellen legt der Worker beim ersten Aufruf selbst an, falls der Deploy die Migrationen nicht ausgeführt hat.
+
+### Wenn es hakt
+
+| Problem | Lösung |
+|---|---|
+| `DNS_PROBE_FINISHED_NXDOMAIN`, auch `nslookup … 1.1.1.1` findet nichts | Die `workers.dev`-Subdomain deines Kontos ist noch nicht aktiv. Unter **Workers & Pages → Account details → Subdomain → Change** neu setzen. |
+| `ERR_SSL_VERSION_OR_CIPHER_MISMATCH` direkt danach | Das HTTPS-Zertifikat wird noch ausgestellt. 5 bis 15 Minuten warten, dann in einem neuen Tab öffnen. |
+| Login sagt „ADMIN_PASSWORD … Beispielwert“ oder „nicht gesetzt“ | Unter **dashtaube → Settings → Variables and Secrets** ein Secret `ADMIN_PASSWORD` mit eigenem Passwort (mind. 12 Zeichen) anlegen und **Deploy** klicken. |
+| Login sagt „Zu viele Fehlversuche“ | Nach 10 falschen Versuchen ist deine IP 15 Minuten gesperrt. |
+
 ### Ohne Button (mit der Kommandozeile)
 
 ```sh

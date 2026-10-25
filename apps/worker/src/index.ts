@@ -1,6 +1,7 @@
 import { OAuthProvider } from "@cloudflare/workers-oauth-provider";
 import app from "./app.js";
 import type { Env } from "./env.js";
+import { ensureMigrated } from "./migrate.js";
 import { mcpHandler } from "./mcp.js";
 
 export { InboxHub } from "./live.js";
@@ -32,7 +33,8 @@ function providerFor(origin: string): OAuthProvider<Env> {
 }
 
 export default {
-  fetch(request, env, ctx) {
+  async fetch(request, env, ctx) {
+    await ensureMigrated(env.DB);
     return providerFor(new URL(request.url).origin).fetch(request, env, ctx);
   },
 } satisfies ExportedHandler<Env>;

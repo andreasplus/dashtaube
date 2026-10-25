@@ -8,6 +8,9 @@ export const SESSION_COOKIE = "dt_session";
 const SESSION_DAYS = 30;
 const MAX_FAILURES = 10;
 const FAILURE_WINDOW_MS = 15 * 60 * 1000;
+const MIN_PASSWORD_LENGTH = 12;
+/** Beispielwerte aus `.dev.vars.example`, die der Deploy-Button vorschlägt. */
+const WEAK_PASSWORDS = new Set(["bitte-aendern-mindestens-12-zeichen"]);
 
 export type SourceRecord = NonNullable<Awaited<ReturnType<typeof getSourceRow>>>;
 
@@ -27,6 +30,15 @@ export async function login(c: Context<AppEnv>, password: string): Promise<Login
   const expected = c.env.ADMIN_PASSWORD;
   if (!expected) {
     return { ok: false, status: 503, error: "ADMIN_PASSWORD ist nicht gesetzt. Lege es als Secret in Cloudflare an." };
+  }
+  if (expected.length < MIN_PASSWORD_LENGTH || WEAK_PASSWORDS.has(expected)) {
+    return {
+      ok: false,
+      status: 503,
+      error:
+        "ADMIN_PASSWORD ist noch der Beispielwert oder kürzer als 12 Zeichen. Setz in Cloudflare unter " +
+        "Settings → Variables and Secrets ein eigenes Passwort.",
+    };
   }
   const db = c.env.DB;
   const now = Date.now();

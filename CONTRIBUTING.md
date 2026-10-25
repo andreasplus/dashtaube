@@ -22,6 +22,6 @@ Du brauchst Node 22 und pnpm 10. Ein Cloudflare-Konto brauchst du nur zum Deploy
 - **UI-Texte** stehen in `apps/web/src/messages/{de,en}.json`. Wir duzen.
 - **Sicherheit:** Tokens nur gehasht speichern, Eingaben einmal mit `zod` prüfen, Links aus Meldungen nie serverseitig aufrufen.
 - **Schema-Änderungen:** Das Taube-Event-Schema ist öffentliche API. Felder nur hinzufügen, nie umbenennen oder entfernen, ohne die Version zu erhöhen.
-- **Datenbank:** neue Migration in `apps/worker/migrations/` (`000N_beschreibung.sql`), bestehende nie ändern.
+- **Datenbank:** neue Migration in `apps/worker/migrations/` (`000N_beschreibung.sql`) und in `apps/worker/src/migrate.ts` eintragen, bestehende nie ändern.
 
 Mit deinem Beitrag stimmst du zu, dass er unter der [MIT-Lizenz](LICENSE) steht, und hältst dich an den [Verhaltenskodex](CODE_OF_CONDUCT.md).
