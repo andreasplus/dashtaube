@@ -140,6 +140,10 @@ export function Inbox({ selectedId, onLogout }: { selectedId: string | null; onL
         if (!filters.q && matches(n, filters)) {
           setItems((prev) => (prev.some((p) => p.id === n.id) ? prev : [n, ...prev]));
         }
+      } else if (event.type === "notification.changed") {
+        const n = event.notification;
+        setItems((prev) => prev.map((p) => (p.id === n.id ? n : p)));
+        setSelected((prev) => (prev?.id === n.id ? n : prev));
       } else if (event.type === "notification.updated") {
         applyLocal(event.ids, event.patch);
       }

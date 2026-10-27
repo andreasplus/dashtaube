@@ -1,11 +1,15 @@
 import init from "../migrations/0001_init.sql";
+import ftsUpdate from "../migrations/0002_fts_update.sql";
 
 /**
  * Alle D1-Migrationen, eingebettet in den Worker. Neue Migrationen hier ergänzen.
  * Die Namen entsprechen den Dateinamen, damit `wrangler d1 migrations apply` und
  * der Worker dieselbe Tabelle `d1_migrations` führen und sich nicht in die Quere kommen.
  */
-export const MIGRATIONS: ReadonlyArray<{ name: string; sql: string }> = [{ name: "0001_init.sql", sql: init }];
+export const MIGRATIONS: ReadonlyArray<{ name: string; sql: string }> = [
+  { name: "0001_init.sql", sql: init },
+  { name: "0002_fts_update.sql", sql: ftsUpdate },
+];
 
 const TABLE = "d1_migrations";
 

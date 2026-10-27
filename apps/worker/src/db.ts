@@ -72,6 +72,8 @@ const NOTIFICATION_COLUMNS = `n.id, n.source_id, s.name AS source_name, s.kind A
 export interface InsertResult {
   notification: Notification;
   duplicate: boolean;
+  /** Bei `upsert`: die bestehende Meldung wurde mit den neuen Inhalten überschrieben. */
+  updated: boolean;
 }
 
 export async function insertNotification(
@@ -80,6 +82,7 @@ export async function insertNotification(
   draft: NotificationDraft,
   via: ReceivedVia,
   raw: unknown,
+  options: { upsert?: boolean } = {},
   now = Date.now(),
 ): Promise<InsertResult> {
   const id = newId("ntf", now);
@@ -123,11 +126,56 @@ export async function insertNotification(
       )
       .bind(sourceId, draft.external_id)
       .first<NotificationRow>();
-    if (existing) return { notification: toNotification(existing), duplicate: true };
+    if (existing && options.upsert) {
+      // Inhalte übernehmen, Status und Snooze bleiben, wie der Nutzer sie gesetzt hat.
+      await db
+        .prepare(
+          `UPDATE notifications SET type = ?, title = ?, body = ?, priority = ?, tags = ?, url = ?, links = ?,
+            actions = ?, agent = ?, project = ?, session = ?, needs_input = ?, group_key = ?, occurred_at = ?,
+            raw = ?, updated_at = ?
+           WHERE id = ?`,
+        )
+        .bind(
+          draft.type,
+          draft.title,
+          draft.body,
+          draft.priority,
+          JSON.stringify(draft.tags),
+          draft.url,
+          JSON.stringify(draft.links),
+          JSON.stringify(draft.actions),
+          draft.agent,
+          draft.project,
+          draft.session,
+          draft.needs_input ? 1 : 0,
+          draft.group_key,
+          draft.occurred_at,
+          raw === undefined ? null : JSON.stringify(raw).slice(0, 100_000),
+          now,
+          existing.id,
+        )
+        .run();
+      const updated = await getNotification(db, existing.id);
+      if (updated) return { notification: updated, duplicate: true, updated: true };
+    }
+    if (existing) return { notification: toNotification(existing), duplicate: true, updated: false };
   }
   const created = await getNotification(db, id);
   if (!created) throw new Error("Meldung konnte nicht gespeichert werden.");
-  return { notification: created, duplicate: false };
+  return { notification: created, duplicate: false, updated: false };
+}
+
+/** IDs, externe IDs und Typen von Meldungen, z. B. um Rückmeldungen an den Sender zu schicken. */
+export async function getNotificationRefs(
+  db: D1Database,
+  ids: string[],
+): Promise<Array<{ id: string; external_id: string | null; type: string | null }>> {
+  if (ids.length === 0) return [];
+  const { results } = await db
+    .prepare(`SELECT id, external_id, type FROM notifications WHERE id IN (${ids.map(() => "?").join(", ")})`)
+    .bind(...ids)
+    .all<{ id: string; external_id: string | null; type: string | null }>();
+  return results;
 }
 
 export async function getNotification(db: D1Database, id: string): Promise<Notification | null> {

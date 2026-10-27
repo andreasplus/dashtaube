@@ -18,6 +18,7 @@
 | **Quellen** | Eine Quelle pro Tool mit eigenem, rotierbarem Token (nur gehasht gespeichert) |
 | **Claude Code** | Fertiger Hook für `Notification`, `Stop` und `SubagentStop` → [Anleitung](connectors/claude-code/README.md) |
 | **ChatGPT & Claude per MCP** | Remote-MCP-Server mit OAuth 2.1, Tool `post_notification`, jede KI wird eine eigene Quelle → [Anleitung](docs/mcp.md) |
+| **Stop-Loss-Rechner** | Fällige Erinnerungen von statistikplus.de, gleiche ID aktualisiert statt doppelt → [Anleitung](connectors/stoploss/README.md) |
 | **Posttaube** | Signierte Webhooks (Standard Webhooks, HMAC-SHA256) statt Mails → [Spezifikation](docs/posttaube.md) |
 | **API** | `POST /v1/notify` mit Token → [API](docs/api.md) |
 
@@ -86,7 +87,7 @@ apps/worker      Cloudflare Worker: Hono-API, MCP-Server, OAuth, Durable Object,
 apps/web         Dashboard (React + Vite), wird als Static Assets im selben Worker ausgeliefert
 packages/core    Taube-Event-Schema, Normalisierung, Claude-Code-Mapping, Signaturen, Suche
 packages/client  Kleiner Client: notify() mit Token, sendSignedEvent() für signierte Webhooks
-connectors/      Fertige Anbindungen (Claude Code)
+connectors/      Fertige Anbindungen (Claude Code, Stop-Loss-Rechner)
 docs/            API, MCP, Posttaube
 ```
 

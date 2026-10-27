@@ -18,7 +18,12 @@ export default defineConfig(async () => {
       cloudflareTest({
         wrangler: { configPath: path.join(root, "wrangler.jsonc") },
         miniflare: {
-          bindings: { ADMIN_PASSWORD: "test-passwort-1234", TEST_MIGRATIONS: migrations },
+          bindings: {
+            ADMIN_PASSWORD: "test-passwort-1234",
+            TEST_MIGRATIONS: migrations,
+            STOPLOSS_ERLEDIGT_URL: "https://stoploss.example/erinnerungen.php",
+            STOPLOSS_ERLEDIGT_KEY: "rueckmelde-schluessel",
+          },
           d1Databases: ["FRESH_DB"],
         },
       }),

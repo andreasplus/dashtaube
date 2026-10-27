@@ -14,12 +14,12 @@ describe("Migrationen im Worker", () => {
   });
 
   it("legt eine leere Datenbank vollständig an und ist danach ein No-op", async () => {
-    expect(await applyMigrations(fresh)).toEqual(["0001_init.sql"]);
+    expect(await applyMigrations(fresh)).toEqual(["0001_init.sql", "0002_fts_update.sql"]);
     const { results } = await fresh
       .prepare("SELECT name FROM sqlite_master WHERE type IN ('table', 'trigger') ORDER BY name")
       .all<{ name: string }>();
     const names = results.map((r) => r.name);
-    for (const name of ["sources", "tokens", "notifications", "notifications_fts", "sessions", "login_failures", "notifications_fts_insert"]) {
+    for (const name of ["sources", "tokens", "notifications", "notifications_fts", "sessions", "login_failures", "notifications_fts_insert", "notifications_fts_update"]) {
       expect(names).toContain(name);
     }
     expect(await applyMigrations(fresh)).toEqual([]);

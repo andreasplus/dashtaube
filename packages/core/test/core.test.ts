@@ -150,3 +150,54 @@ describe("Hilfsfunktionen", () => {
     expect(highlightToHtml(`<b>${HIGHLIGHT_START}Build${HIGHLIGHT_END}</b>`)).toBe("&#60;b&#62;<mark>Build</mark>&#60;/b&#62;");
   });
 });
+
+describe("Stop-Loss-Eingang", () => {
+  const beispiel = {
+    quelle: "stoploss",
+    erinnerungen: [
+      {
+        id: 1,
+        art: "stop_ablauf",
+        faellig: "2026-10-30",
+        ueberfaellig: false,
+        titel: "Stop-Order Tokio Marine läuft ab",
+        text: "Die Stop-Order bei 2,99 EUR für Tokio Marine (8766.T) gilt bis 31.10.2026. Bitte beim Broker neu setzen.",
+        symbol: "8766.T",
+        broker_stop: 2.99,
+        link: "https://statistikplus.de/stoploss/",
+      },
+      { id: 999, art: "stop_ablauf", faellig: "2026-10-30", ueberfaellig: true, titel: "Test", text: "Testerinnerung", symbol: null, broker_stop: null, link: "https://statistikplus.de/stoploss/" },
+    ],
+  };
+
+  it("macht aus jeder Erinnerung ein gültiges Taube-Event", async () => {
+    const { stoplossToEvents } = await import("../src/index.js");
+    const result = stoplossToEvents(beispiel);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.value).toHaveLength(2);
+    expect(result.value[0]).toMatchObject({
+      id: "stoploss-1",
+      type: "stoploss.stop_ablauf",
+      priority: 4,
+      needs_input: true,
+      project: "8766.T",
+      url: "https://statistikplus.de/stoploss/",
+      tags: ["stoploss", "stop-ablauf"],
+    });
+    expect(result.value[0]!.body).toContain("**Fällig:** 30.10.2026");
+    expect(result.value[0]!.body).toContain("2,99");
+    expect(result.value[1]).toMatchObject({ priority: 5, tags: ["stoploss", "stop-ablauf", "ueberfaellig"] });
+    for (const event of result.value) expect(parseTaubeEvent(event).ok).toBe(true);
+  });
+
+  it("lehnt kaputte Lieferungen mit Feldangaben ab", async () => {
+    const { stoplossToEvents, stoplossIdFromExternal } = await import("../src/index.js");
+    const result = stoplossToEvents({ erinnerungen: [{ id: 1 }] });
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.errors.join()).toMatch(/titel/);
+    expect(stoplossToEvents({}).ok).toBe(false);
+    expect(stoplossIdFromExternal("stoploss-17")).toBe("17");
+    expect(stoplossIdFromExternal("job-1")).toBeNull();
+  });
+});
