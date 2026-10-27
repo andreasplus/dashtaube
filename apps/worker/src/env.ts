@@ -9,6 +9,10 @@ export interface Env {
   CF_VERSION_METADATA?: { id: string; tag?: string; timestamp?: string };
   /** Passwort für das Dashboard (Secret). */
   ADMIN_PASSWORD?: string;
+  /** Optional: Rückmeldung „erledigt“ an den Stop-Loss-Rechner (URL von erinnerungen.php). */
+  STOPLOSS_ERLEDIGT_URL?: string;
+  /** Optional: Schlüssel für den Header X-Key dieser Rückmeldung (Secret). */
+  STOPLOSS_ERLEDIGT_KEY?: string;
   /** Wird vom OAuthProvider gesetzt. */
   OAUTH_PROVIDER: OAuthHelpers;
 }

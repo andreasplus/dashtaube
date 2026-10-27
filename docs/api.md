@@ -27,6 +27,10 @@ Body: ein [Taube-Event](#taube-event-schema-v1). Antwort:
 
 Nimmt die Eingabe eines Claude-Code-Hooks unverändert an (Token wie oben). Siehe [Claude-Code-Connector](../connectors/claude-code/README.md).
 
+### `POST /v1/hooks/stoploss`
+
+Erinnerungen vom Stop-Loss-Rechner (Token wie oben). Gleiche `id` aktualisiert die bestehende Meldung. Siehe [Stop-Loss-Connector](../connectors/stoploss/README.md).
+
 ### `POST /v1/webhooks/{sourceId}`
 
 Signierte Webhooks nach [Standard Webhooks](https://www.standardwebhooks.com) statt Token. Siehe [Posttaube](posttaube.md).

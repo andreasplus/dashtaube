@@ -18,6 +18,7 @@
 | **Quellen** | Eine Quelle pro Tool mit eigenem, rotierbarem Token (nur gehasht gespeichert) |
 | **Claude Code** | Fertiger Hook für `Notification`, `Stop` und `SubagentStop` → [Anleitung](connectors/claude-code/README.md) |
 | **ChatGPT & Claude per MCP** | Remote-MCP-Server mit OAuth 2.1, Tool `post_notification`, jede KI wird eine eigene Quelle → [Anleitung](docs/mcp.md) |
+| **Stop-Loss-Rechner** | Fällige Erinnerungen von statistikplus.de, gleiche ID aktualisiert statt doppelt → [Anleitung](connectors/stoploss/README.md) |
 | **Posttaube** | Signierte Webhooks (Standard Webhooks, HMAC-SHA256) statt Mails → [Spezifikation](docs/posttaube.md) |
 | **API** | `POST /v1/notify` mit Token → [API](docs/api.md) |
 
@@ -28,6 +29,17 @@
 3. Bei **ADMIN_PASSWORD** ein langes Passwort eintragen (z. B. `openssl rand -base64 24`).
 4. Deploy abwarten. Die Datenbank-Migrationen laufen dabei automatisch.
 5. `https://dashtaube.<dein-konto>.workers.dev` öffnen, anmelden, unter *Quellen* die erste Quelle anlegen und auf *Testmeldung* klicken.
+
+Die Datenbank-Tabellen legt der Worker beim ersten Aufruf selbst an, falls der Deploy die Migrationen nicht ausgeführt hat.
+
+### Wenn es hakt
+
+| Problem | Lösung |
+|---|---|
+| `DNS_PROBE_FINISHED_NXDOMAIN`, auch `nslookup … 1.1.1.1` findet nichts | Die `workers.dev`-Subdomain deines Kontos ist noch nicht aktiv. Unter **Workers & Pages → Account details → Subdomain → Change** neu setzen. |
+| `ERR_SSL_VERSION_OR_CIPHER_MISMATCH` direkt danach | Das HTTPS-Zertifikat wird noch ausgestellt. 5 bis 15 Minuten warten, dann in einem neuen Tab öffnen. |
+| Login sagt „ADMIN_PASSWORD … Beispielwert“ oder „nicht gesetzt“ | Unter **dashtaube → Settings → Variables and Secrets** ein Secret `ADMIN_PASSWORD` mit eigenem Passwort (mind. 12 Zeichen) anlegen und **Deploy** klicken. |
+| Login sagt „Zu viele Fehlversuche“ | Nach 10 falschen Versuchen ist deine IP 15 Minuten gesperrt. |
 
 ### Ohne Button (mit der Kommandozeile)
 
@@ -75,7 +87,7 @@ apps/worker      Cloudflare Worker: Hono-API, MCP-Server, OAuth, Durable Object,
 apps/web         Dashboard (React + Vite), wird als Static Assets im selben Worker ausgeliefert
 packages/core    Taube-Event-Schema, Normalisierung, Claude-Code-Mapping, Signaturen, Suche
 packages/client  Kleiner Client: notify() mit Token, sendSignedEvent() für signierte Webhooks
-connectors/      Fertige Anbindungen (Claude Code)
+connectors/      Fertige Anbindungen (Claude Code, Stop-Loss-Rechner)
 docs/            API, MCP, Posttaube
 ```
 

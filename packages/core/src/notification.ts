@@ -64,5 +64,7 @@ export interface Source {
 /** Live-Ereignisse über den WebSocket. */
 export type LiveEvent =
   | { type: "notification.created"; notification: Notification }
+  /** Inhalt einer bestehenden Meldung wurde ersetzt (gleiche ID erneut geliefert). */
+  | { type: "notification.changed"; notification: Notification }
   | { type: "notification.updated"; ids: string[]; patch: { status?: NotificationStatus; snooze_until?: number | null } }
   | { type: "sources.changed" };

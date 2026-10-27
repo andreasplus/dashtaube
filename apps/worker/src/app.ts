@@ -8,6 +8,9 @@ import {
   generateToken,
   generateWebhookSecret,
   sha256Hex,
+  STOPLOSS_TYPE_PREFIX,
+  stoplossIdFromExternal,
+  stoplossToEvents,
   verifyWebhook,
 } from "@dashtaube/core";
 import { Hono, type Context } from "hono";
@@ -20,6 +23,7 @@ import {
   createSource,
   deleteSource,
   getNotification,
+  getNotificationRefs,
   getSourceRow,
   listNotifications,
   listSources,
@@ -28,7 +32,7 @@ import {
   updateNotifications,
   updateSource,
 } from "./db.js";
-import { appVersion, OWNER_ID } from "./env.js";
+import { appVersion, OWNER_ID, type Env } from "./env.js";
 import { ingest, type IngestResult } from "./ingest.js";
 import { liveFetch, publish } from "./live.js";
 import { getCookie } from "hono/cookie";
@@ -95,6 +99,36 @@ app.post("/v1/hooks/claude-code", limitBody, requireToken, async (c) => {
     origin: origin(c),
   });
   return ingestResponse(c, result);
+});
+
+/**
+ * Erinnerungen vom Stop-Loss-Rechner (statistikplus.de). Kommt dieselbe ID erneut,
+ * wird die Meldung aktualisiert statt doppelt angelegt.
+ */
+app.post("/v1/hooks/stoploss", limitBody, requireToken, async (c) => {
+  const body = await readJson(c);
+  if (!body.ok) return body.response;
+  const events = stoplossToEvents(body.value);
+  if (!events.ok) return c.json({ error: "Erinnerungen sind ungültig.", details: events.errors }, 400);
+  const ids: string[] = [];
+  let neu = 0;
+  let aktualisiert = 0;
+  const raw = (body.value as { erinnerungen: unknown[] }).erinnerungen;
+  for (const [index, event] of events.value.entries()) {
+    const result = await ingest(c.env, c.executionCtx, {
+      sourceId: c.get("source").id,
+      input: event,
+      raw: raw[index],
+      via: "push",
+      origin: origin(c),
+      upsert: true,
+    });
+    if (!result.ok) return c.json({ error: "Erinnerung ist ungültig.", details: result.errors }, 400);
+    ids.push(result.id);
+    if (!result.duplicate) neu++;
+    else if (result.updated) aktualisiert++;
+  }
+  return c.json({ angenommen: ids.length, neu, aktualisiert, ids });
 });
 
 /** Signierte Webhooks (Standard Webhooks, HMAC-SHA256), z. B. von Posttaube. */
@@ -204,8 +238,30 @@ async function applyPatch(c: Context<AppEnv>, ids: string[], value: unknown) {
   const changed = await updateNotifications(c.env.DB, ids, fullPatch);
   if (changed > 0) {
     c.executionCtx.waitUntil(publish(c.env, { type: "notification.updated", ids, patch: fullPatch }));
+    if (patch.status === "done") c.executionCtx.waitUntil(reportStoplossDone(c.env, ids));
   }
   return c.json({ changed });
+}
+
+/** Meldet erledigte Stop-Loss-Erinnerungen an den Stop-Loss-Rechner zurück, falls eingerichtet. */
+async function reportStoplossDone(env: Env, ids: string[]): Promise<void> {
+  if (!env.STOPLOSS_ERLEDIGT_URL || !env.STOPLOSS_ERLEDIGT_KEY) return;
+  const refs = await getNotificationRefs(env.DB, ids);
+  for (const ref of refs) {
+    if (!ref.type?.startsWith(STOPLOSS_TYPE_PREFIX)) continue;
+    const id = stoplossIdFromExternal(ref.external_id);
+    if (!id) continue;
+    try {
+      const response = await fetch(env.STOPLOSS_ERLEDIGT_URL, {
+        method: "POST",
+        headers: { "x-key": env.STOPLOSS_ERLEDIGT_KEY },
+        body: new URLSearchParams({ erledigt: id }),
+      });
+      if (!response.ok) console.warn(`Stop-Loss-Rückmeldung für ${id}: HTTP ${response.status}`);
+    } catch (error) {
+      console.warn(`Stop-Loss-Rückmeldung für ${id} fehlgeschlagen`, error);
+    }
+  }
 }
 
 ui.patch("/notifications/:id", limitBody, async (c) => {
