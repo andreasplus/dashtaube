@@ -340,6 +340,7 @@ interface SourceRow {
   kind: SourceKind;
   icon: string | null;
   color: string | null;
+  alert: number;
   signing_secret: string | null;
   oauth_client_id: string | null;
   created_at: number;
@@ -348,7 +349,7 @@ interface SourceRow {
 export async function listSources(db: D1Database, now = Date.now()): Promise<Source[]> {
   const { results } = await db
     .prepare(
-      `SELECT s.id, s.name, s.kind, s.icon, s.color, s.signing_secret IS NOT NULL AS has_signing_secret, s.created_at,
+      `SELECT s.id, s.name, s.kind, s.icon, s.color, s.alert, s.signing_secret IS NOT NULL AS has_signing_secret, s.created_at,
         t.prefix AS token_prefix, t.created_at AS token_created_at, t.last_used_at AS token_last_used_at,
         (SELECT count(*) FROM notifications n WHERE n.source_id = s.id) AS notification_count,
         (SELECT count(*) FROM notifications n WHERE n.source_id = s.id AND n.status = 'new'
@@ -358,8 +359,8 @@ export async function listSources(db: D1Database, now = Date.now()): Promise<Sou
        ORDER BY s.name COLLATE NOCASE`,
     )
     .bind(now)
-    .all<Omit<Source, "has_signing_secret"> & { has_signing_secret: number }>();
-  return results.map((row) => ({ ...row, has_signing_secret: row.has_signing_secret === 1 }));
+    .all<Omit<Source, "alert" | "has_signing_secret"> & { alert: number; has_signing_secret: number }>();
+  return results.map((row) => ({ ...row, alert: row.alert === 1, has_signing_secret: row.has_signing_secret === 1 }));
 }
 
 export async function getSourceRow(db: D1Database, id: string): Promise<SourceRow | null> {
@@ -375,6 +376,7 @@ export interface NewSource {
   kind: SourceKind;
   icon?: string | null | undefined;
   color?: string | null | undefined;
+  alert?: boolean | undefined;
   signing_secret?: string | null | undefined;
   oauth_client_id?: string | null | undefined;
 }
@@ -383,8 +385,8 @@ export async function createSource(db: D1Database, source: NewSource, now = Date
   const id = newId("src", now);
   await db
     .prepare(
-      `INSERT INTO sources (id, name, kind, icon, color, signing_secret, oauth_client_id, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO sources (id, name, kind, icon, color, alert, signing_secret, oauth_client_id, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
     .bind(
       id,
@@ -392,6 +394,7 @@ export async function createSource(db: D1Database, source: NewSource, now = Date
       source.kind,
       source.icon ?? null,
       source.color ?? null,
+      source.alert ? 1 : 0,
       source.signing_secret ?? null,
       source.oauth_client_id ?? null,
       now,
@@ -403,7 +406,12 @@ export async function createSource(db: D1Database, source: NewSource, now = Date
 export async function updateSource(
   db: D1Database,
   id: string,
-  patch: { name?: string | undefined; icon?: string | null | undefined; color?: string | null | undefined },
+  patch: {
+    name?: string | undefined;
+    icon?: string | null | undefined;
+    color?: string | null | undefined;
+    alert?: boolean | undefined;
+  },
 ): Promise<boolean> {
   const sets: string[] = [];
   const params: unknown[] = [];
@@ -412,6 +420,10 @@ export async function updateSource(
       sets.push(`${key} = ?`);
       params.push(patch[key]);
     }
+  }
+  if (patch.alert !== undefined) {
+    sets.push("alert = ?");
+    params.push(patch.alert ? 1 : 0);
   }
   if (sets.length === 0) return true;
   const result = await db

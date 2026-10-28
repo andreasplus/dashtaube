@@ -1,5 +1,13 @@
 import type { Source, SourceKind } from "@dashtaube/core/notification";
 import { useCallback, useEffect, useState, type FormEvent } from "react";
+import {
+  notificationPermission,
+  requestNotificationPermission,
+  setSoundEnabled,
+  soundEnabled,
+  testAlert,
+  type Permission,
+} from "../alerts";
 import { api } from "../api";
 import { formatDate, t, type MessageKey } from "../i18n";
 import { Header } from "./Header";
@@ -54,12 +62,47 @@ export DASHTAUBE_TOKEN=${token}
   );
 }
 
+/** Einstellungen, die nur für diesen Browser gelten: Ton und Desktop-Benachrichtigungen. */
+function BrowserAlerts() {
+  const [sound, setSound] = useState(soundEnabled);
+  const [permission, setPermission] = useState<Permission>(notificationPermission);
+  return (
+    <section className="card">
+      <h2>{t("alerts.heading")}</h2>
+      <p className="muted">{t("alerts.intro")}</p>
+      <div className="alert-settings">
+        <label className="check">
+          <input
+            type="checkbox"
+            checked={sound}
+            onChange={(e) => {
+              setSoundEnabled(e.target.checked);
+              setSound(e.target.checked);
+            }}
+          />
+          {t("alerts.sound")}
+        </label>
+        <span className="muted small">{t(`alerts.permission.${permission}` as MessageKey)}</span>
+        <div className="toolbar">
+          {permission === "default" && (
+            <button onClick={async () => setPermission(await requestNotificationPermission())}>
+              {t("alerts.allow")}
+            </button>
+          )}
+          <button onClick={testAlert}>{t("alerts.test")}</button>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export function Sources({ onLogout }: { onLogout: () => void }) {
   const [sources, setSources] = useState<Source[]>([]);
   const [name, setName] = useState("");
   const [kind, setKind] = useState<SourceKind>("generic");
   const [icon, setIcon] = useState("");
   const [color, setColor] = useState(COLORS[0]!);
+  const [alert, setAlert] = useState(false);
   const [secret, setSecret] = useState<Secret | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -85,10 +128,11 @@ export function Sources({ onLogout }: { onLogout: () => void }) {
   const create = (event: FormEvent) => {
     event.preventDefault();
     void guard(async () => {
-      const result = await api.createSource({ name, kind, icon: icon || null, color });
+      const result = await api.createSource({ name, kind, icon: icon || null, color, alert });
       setSecret({ sourceId: result.id, kind, ...result });
       setName("");
       setIcon("");
+      setAlert(false);
       reload();
     });
   };
@@ -109,6 +153,8 @@ export function Sources({ onLogout }: { onLogout: () => void }) {
           <p className="muted">{t("sources.mcpText")}</p>
           <CopyField label="MCP" value={mcpUrl} />
         </section>
+
+        <BrowserAlerts />
 
         <section className="card">
           <h2>{t("sources.new")}</h2>
@@ -144,6 +190,10 @@ export function Sources({ onLogout }: { onLogout: () => void }) {
                 />
               ))}
             </fieldset>
+            <label className="check">
+              <input type="checkbox" checked={alert} onChange={(e) => setAlert(e.target.checked)} />
+              {t("alerts.sourceToggle")}
+            </label>
             <button className="primary" disabled={!name.trim()}>
               {t("sources.create")}
             </button>
@@ -191,6 +241,24 @@ export function Sources({ onLogout }: { onLogout: () => void }) {
                   </p>
                 </div>
               </div>
+              <label className="check">
+                <input
+                  type="checkbox"
+                  checked={s.alert}
+                  onChange={(e) => {
+                    const on = e.target.checked;
+                    setSources((prev) => prev.map((p) => (p.id === s.id ? { ...p, alert: on } : p)));
+                    void guard(async () => {
+                      try {
+                        await api.updateSource(s.id, { alert: on });
+                      } finally {
+                        reload();
+                      }
+                    });
+                  }}
+                />
+                {t("alerts.sourceToggle")}
+              </label>
               <div className="toolbar">
                 <button
                   onClick={() =>

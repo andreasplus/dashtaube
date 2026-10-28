@@ -76,8 +76,8 @@ Für das eigene Dashboard, mit Cookie und gleichem `Origin`:
 | `GET/PATCH` | `/v1/notifications/{id}` | `PATCH {status?, snooze_until?}` |
 | `POST` | `/v1/notifications/bulk` | `{ids, patch}` |
 | `GET` | `/v1/counts` | Zähler und Quellen |
-| `GET/POST` | `/v1/sources` | Quellen; `POST {name, kind, icon?, color?}` gibt Token (und bei `posttaube` Signatur-Geheimnis) einmalig zurück |
-| `PATCH/DELETE` | `/v1/sources/{id}` | |
+| `GET/POST` | `/v1/sources` | Quellen; `POST {name, kind, icon?, color?, alert?}` gibt Token (und bei `posttaube` Signatur-Geheimnis) einmalig zurück |
+| `PATCH/DELETE` | `/v1/sources/{id}` | `PATCH {name?, icon?, color?, alert?}`; `alert: true` lässt das Dashboard bei neuen Meldungen klingeln |
 | `POST` | `/v1/sources/{id}/token` | Token rotieren |
 | `POST` | `/v1/sources/{id}/signing-secret` | Signatur-Geheimnis rotieren |
 | `POST` | `/v1/sources/{id}/disconnect` | MCP-Verbindung trennen |
