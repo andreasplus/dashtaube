@@ -14,7 +14,7 @@ describe("Migrationen im Worker", () => {
   });
 
   it("legt eine leere Datenbank vollständig an und ist danach ein No-op", async () => {
-    expect(await applyMigrations(fresh)).toEqual(["0001_init.sql", "0002_fts_update.sql"]);
+    expect(await applyMigrations(fresh)).toEqual(["0001_init.sql", "0002_fts_update.sql", "0003_source_alert.sql"]);
     const { results } = await fresh
       .prepare("SELECT name FROM sqlite_master WHERE type IN ('table', 'trigger') ORDER BY name")
       .all<{ name: string }>();

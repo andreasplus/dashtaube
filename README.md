@@ -16,6 +16,7 @@
 | **Aktionen** | Gelesen, erledigt, archivieren, später (snoozen). Tastatur: `j`/`k`, `e`, `y`, `s`, `u`, `/`, `?` |
 | **Suche** | Volltext über Titel, Text, Tags und Quelle (SQLite FTS5) mit markierten Treffern |
 | **Quellen** | Eine Quelle pro Tool mit eigenem, rotierbarem Token (nur gehasht gespeichert) |
+| **Klingeln** | Pro Quelle einschaltbar: Ton, Desktop-Benachrichtigung, blinkender Tab-Titel und roter Punkt im Favicon, solange die Inbox offen ist |
 | **Claude Code** | Fertiger Hook für `Notification`, `Stop` und `SubagentStop` → [Anleitung](connectors/claude-code/README.md) |
 | **ChatGPT & Claude per MCP** | Remote-MCP-Server mit OAuth 2.1, Tool `post_notification`, jede KI wird eine eigene Quelle → [Anleitung](docs/mcp.md) |
 | **Stop-Loss-Rechner** | Fällige Erinnerungen von statistikplus.de, gleiche ID aktualisiert statt doppelt → [Anleitung](connectors/stoploss/README.md) |

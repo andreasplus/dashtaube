@@ -305,6 +305,7 @@ ui.post("/sources", limitBody, async (c) => {
       kind: z.enum(["generic", "claude_code", "posttaube"]).default("generic"),
       icon: iconSchema,
       color: colorSchema,
+      alert: z.boolean().optional(),
     })
     .safeParse(body.value);
   if (!parsed.success) return c.json({ error: "Ungültige Quelle.", details: formatIssues(parsed.error) }, 400);
@@ -328,7 +329,12 @@ ui.patch("/sources/:id", limitBody, async (c) => {
   const body = await readJson(c);
   if (!body.ok) return body.response;
   const parsed = z
-    .object({ name: z.string().trim().min(1).max(80).optional(), icon: iconSchema, color: colorSchema })
+    .object({
+      name: z.string().trim().min(1).max(80).optional(),
+      icon: iconSchema,
+      color: colorSchema,
+      alert: z.boolean().optional(),
+    })
     .safeParse(body.value);
   if (!parsed.success) return c.json({ error: "Ungültige Änderung.", details: formatIssues(parsed.error) }, 400);
   const ok = await updateSource(c.env.DB, c.req.param("id"), parsed.data);

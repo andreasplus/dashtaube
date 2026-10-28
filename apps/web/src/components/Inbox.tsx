@@ -1,5 +1,6 @@
 import type { InboxView, LiveEvent, Notification, NotificationStatus } from "@dashtaube/core/notification";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { announce, setBaseTitle } from "../alerts";
 import { api, type Counts, type Patch } from "../api";
 import { t, type MessageKey } from "../i18n";
 import { useLive } from "../live";
@@ -75,6 +76,10 @@ export function Inbox({ selectedId, onLogout }: { selectedId: string | null; onL
   const [snoozeOpen, setSnoozeOpen] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
 
+  // Für Live-Ereignisse: welche Quellen klingeln sollen, ohne onLive bei jeder Zählung neu zu bauen.
+  const countsRef = useRef(counts);
+  countsRef.current = counts;
+
   const refreshCounts = useCallback(() => {
     api.counts().then(setCounts).catch(() => undefined);
   }, []);
@@ -137,6 +142,7 @@ export function Inbox({ selectedId, onLogout }: { selectedId: string | null; onL
     (event: LiveEvent) => {
       if (event.type === "notification.created") {
         const n = event.notification;
+        if (countsRef.current?.sources.some((s) => s.id === n.source_id && s.alert)) announce(n);
         if (!filters.q && matches(n, filters)) {
           setItems((prev) => (prev.some((p) => p.id === n.id) ? prev : [n, ...prev]));
         }
@@ -272,7 +278,7 @@ export function Inbox({ selectedId, onLogout }: { selectedId: string | null; onL
 
   useEffect(() => {
     const unread = counts?.unread ?? 0;
-    document.title = unread > 0 ? `(${unread}) ${t("app.name")}` : t("app.name");
+    setBaseTitle(unread > 0 ? `(${unread}) ${t("app.name")}` : t("app.name"));
   }, [counts]);
 
   const changeView = (next: View) => {
@@ -331,6 +337,11 @@ export function Inbox({ selectedId, onLogout }: { selectedId: string | null; onL
                   <span className="swatch" style={{ background: s.color ?? "var(--muted)" }} />
                   {s.icon && <span>{s.icon}</span>}
                   <span>{s.name}</span>
+                  {s.alert && (
+                    <span className="alert-mark" title={t("alerts.sourceOn")} aria-label={t("alerts.sourceOn")}>
+                      🔔
+                    </span>
+                  )}
                 </span>
                 {s.unread_count > 0 && <span className="count">{s.unread_count}</span>}
               </button>

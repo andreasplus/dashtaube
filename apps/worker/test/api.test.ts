@@ -197,3 +197,26 @@ describe("Suche und Aktionen", () => {
     expect(second.next_cursor).toBeNull();
   });
 });
+
+describe("Quellen", () => {
+  it("merkt sich pro Quelle, ob das Dashboard klingeln soll", async () => {
+    const session = await loginSession();
+    const leise = await createSource(session, { name: "Leise" });
+    const laut = await createSource(session, { name: "Laut", alert: true });
+
+    const alertOf = async (id: string) =>
+      (await session.json<{ sources: Array<{ id: string; alert: boolean }> }>("/v1/sources")).sources.find(
+        (s) => s.id === id,
+      )?.alert;
+    expect(await alertOf(leise.id)).toBe(false);
+    expect(await alertOf(laut.id)).toBe(true);
+
+    const patch = (id: string, body: unknown) =>
+      session.ui(`/v1/sources/${id}`, { method: "PATCH", body: JSON.stringify(body) });
+    expect((await patch(leise.id, { alert: true })).status).toBe(200);
+    expect((await patch(laut.id, { alert: false })).status).toBe(200);
+    expect((await patch(laut.id, { alert: "ja" })).status).toBe(400);
+    expect(await alertOf(leise.id)).toBe(true);
+    expect(await alertOf(laut.id)).toBe(false);
+  });
+});

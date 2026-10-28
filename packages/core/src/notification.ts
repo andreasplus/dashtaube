@@ -52,6 +52,8 @@ export interface Source {
   kind: SourceKind;
   icon: string | null;
   color: string | null;
+  /** Dashboard klingelt und meldet sich bei neuen Meldungen dieser Quelle. */
+  alert: boolean;
   has_signing_secret: boolean;
   created_at: number;
   token_prefix: string | null;

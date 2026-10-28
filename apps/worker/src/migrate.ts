@@ -1,5 +1,6 @@
 import init from "../migrations/0001_init.sql";
 import ftsUpdate from "../migrations/0002_fts_update.sql";
+import sourceAlert from "../migrations/0003_source_alert.sql";
 
 /**
  * Alle D1-Migrationen, eingebettet in den Worker. Neue Migrationen hier ergänzen.
@@ -9,6 +10,7 @@ import ftsUpdate from "../migrations/0002_fts_update.sql";
 export const MIGRATIONS: ReadonlyArray<{ name: string; sql: string }> = [
   { name: "0001_init.sql", sql: init },
   { name: "0002_fts_update.sql", sql: ftsUpdate },
+  { name: "0003_source_alert.sql", sql: sourceAlert },
 ];
 
 const TABLE = "d1_migrations";

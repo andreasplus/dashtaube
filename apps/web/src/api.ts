@@ -73,12 +73,12 @@ export const api = {
   counts: () => request<Counts>("/v1/counts"),
 
   sources: () => request<{ sources: Source[] }>("/v1/sources"),
-  createSource: (body: { name: string; kind: string; icon?: string | null; color?: string | null }) =>
+  createSource: (body: { name: string; kind: string; icon?: string | null; color?: string | null; alert?: boolean }) =>
     request<{ id: string; token: string; signing_secret?: string; webhook_url?: string }>("/v1/sources", {
       method: "POST",
       body: JSON.stringify(body),
     }),
-  updateSource: (id: string, body: { name?: string; icon?: string | null; color?: string | null }) =>
+  updateSource: (id: string, body: { name?: string; icon?: string | null; color?: string | null; alert?: boolean }) =>
     request(`/v1/sources/${id}`, { method: "PATCH", body: JSON.stringify(body) }),
   deleteSource: (id: string) => request(`/v1/sources/${id}`, { method: "DELETE" }),
   rotateToken: (id: string) => request<{ token: string }>(`/v1/sources/${id}/token`, { method: "POST" }),
