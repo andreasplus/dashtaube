@@ -1,12 +1,27 @@
 import type { LiveEvent } from "@dashtaube/core/notification";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useSyncExternalStore } from "react";
 
-/** Hält eine WebSocket-Verbindung zu /v1/live offen und verbindet sich bei Abbruch neu. */
-export function useLive(onEvent: (event: LiveEvent) => void, enabled: boolean): boolean {
-  const [connected, setConnected] = useState(false);
-  const handler = useRef(onEvent);
-  handler.current = onEvent;
+/**
+ * Eine WebSocket-Verbindung zu /v1/live für die ganze App. App hält sie mit
+ * `useLiveConnection` offen, Seiten und das Klingeln hören mit `useLive` mit.
+ */
 
+const listeners = new Set<(event: LiveEvent) => void>();
+const connectionListeners = new Set<() => void>();
+let connected = false;
+
+function setConnected(value: boolean): void {
+  connected = value;
+  for (const notify of connectionListeners) notify();
+}
+
+function subscribeConnection(notify: () => void): () => void {
+  connectionListeners.add(notify);
+  return () => connectionListeners.delete(notify);
+}
+
+/** Hält die Verbindung offen, solange `enabled` gilt, und verbindet sich bei Abbruch neu. */
+export function useLiveConnection(enabled: boolean): void {
   useEffect(() => {
     if (!enabled) return;
     let socket: WebSocket | null = null;
@@ -25,11 +40,13 @@ export function useLive(onEvent: (event: LiveEvent) => void, enabled: boolean): 
       };
       socket.onmessage = (message) => {
         if (message.data === "pong") return;
+        let event: LiveEvent;
         try {
-          handler.current(JSON.parse(message.data as string) as LiveEvent);
+          event = JSON.parse(message.data as string) as LiveEvent;
         } catch {
-          // unbekanntes Format ignorieren
+          return; // unbekanntes Format ignorieren
         }
+        for (const listener of listeners) listener(event);
       };
       socket.onclose = () => {
         setConnected(false);
@@ -58,6 +75,20 @@ export function useLive(onEvent: (event: LiveEvent) => void, enabled: boolean): 
       socket?.close();
     };
   }, [enabled]);
+}
 
-  return connected;
+/** Hört auf Live-Ereignisse und gibt zurück, ob die Verbindung steht. */
+export function useLive(onEvent: (event: LiveEvent) => void): boolean {
+  const handler = useRef(onEvent);
+  handler.current = onEvent;
+
+  useEffect(() => {
+    const listener = (event: LiveEvent) => handler.current(event);
+    listeners.add(listener);
+    return () => {
+      listeners.delete(listener);
+    };
+  }, []);
+
+  return useSyncExternalStore(subscribeConnection, () => connected);
 }

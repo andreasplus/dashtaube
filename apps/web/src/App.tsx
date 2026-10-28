@@ -1,14 +1,18 @@
 import { useCallback, useEffect, useState } from "react";
+import { useAlerts } from "./alerts";
 import { api } from "./api";
 import { Inbox } from "./components/Inbox";
 import { Login } from "./components/Login";
 import { Sources } from "./components/Sources";
 import { locale, t } from "./i18n";
+import { useLiveConnection } from "./live";
 import { navigate, usePath } from "./router";
 
 export function App() {
   const path = usePath();
   const [auth, setAuth] = useState<"unknown" | "yes" | "no">("unknown");
+  useLiveConnection(auth === "yes");
+  useAlerts(auth === "yes");
 
   useEffect(() => {
     document.documentElement.lang = locale;

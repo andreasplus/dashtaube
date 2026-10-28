@@ -1,5 +1,8 @@
-import type { Notification } from "@dashtaube/core/notification";
+import type { LiveEvent, Notification } from "@dashtaube/core/notification";
+import { useCallback, useEffect, useRef } from "react";
+import { api } from "./api";
 import { t } from "./i18n";
+import { useLive } from "./live";
 import { navigate } from "./router";
 
 /**
@@ -49,6 +52,8 @@ function unlockAudio(): void {
   }
 }
 for (const type of ["pointerdown", "keydown"]) window.addEventListener(type, unlockAudio, { passive: true });
+// Manche Browser erlauben Ton sofort (z. B. wenn Ton für die Seite freigegeben ist). Sonst bleibt er bis zum ersten Klick stumm.
+unlockAudio();
 
 /** Kurzer Zwei-Ton-Gong, ohne Audiodatei. */
 export function playChime(): void {
@@ -198,6 +203,35 @@ export function announce(n: Notification): void {
     if (attentionNeeded()) showDesktop(n);
   }
   if (attentionNeeded()) startAttention(n);
+}
+
+/**
+ * Lauscht auf allen Seiten auf neue Meldungen und klingelt bei Quellen, bei denen es
+ * eingeschaltet ist. Die Liste dieser Quellen wird bei jeder Änderung an den Quellen neu geladen.
+ */
+export function useAlerts(enabled: boolean): void {
+  const alerting = useRef(new Set<string>());
+
+  const reload = useCallback(() => {
+    api
+      .sources()
+      .then(({ sources }) => {
+        alerting.current = new Set(sources.filter((s) => s.alert).map((s) => s.id));
+      })
+      .catch(() => undefined);
+  }, []);
+
+  useEffect(() => {
+    if (enabled) reload();
+  }, [enabled, reload]);
+
+  useLive((event: LiveEvent) => {
+    if (!enabled) return;
+    if (event.type === "sources.changed") reload();
+    else if (event.type === "notification.created" && alerting.current.has(event.notification.source_id)) {
+      announce(event.notification);
+    }
+  });
 }
 
 /** Zum Ausprobieren auf der Quellen-Seite. */
